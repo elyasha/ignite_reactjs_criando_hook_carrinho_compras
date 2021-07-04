@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext, useState, useRef, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { api } from '../services/api';
 import { Product, Stock } from '../types';
@@ -30,6 +30,23 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     return [];
   });
 
+  const prevCartRef = useRef<Product[]>();
+
+  useEffect(() => {
+    prevCartRef.current = cart;
+  })
+
+  const cartPreviousValue = prevCartRef.current ?? cart;
+
+  useEffect(() => {
+    if (cartPreviousValue !== cart) {
+      localStorage.setItem('@RocketShoes:cart', JSON.stringify(cart))
+    }
+
+  }, [cart, cartPreviousValue])
+
+
+
   const addProduct = async (productId: number) => {
     try {
       const productAlreadyExists = cart.find(p => p.id === productId);
@@ -48,8 +65,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         })
 
         setCart(updatedAmountCartProduct)
-
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedAmountCartProduct))
         return;
       }
 
@@ -57,7 +72,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       const cartWithNewProduct = [...cart, {...productData, amount: 1}]
 
       setCart(cartWithNewProduct)
-      localStorage.setItem('@RocketShoes:cart', JSON.stringify(cartWithNewProduct))
       return;
 
     } catch {
@@ -71,7 +85,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       if (productAlreadyExists) {
         const carWithoutProduct = cart.filter(p => p.id !== productId)
         setCart(carWithoutProduct)
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify(carWithoutProduct))
         return;
       }
       toast.error('Erro na remoção do produto')
@@ -106,7 +119,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         })
 
         setCart(updatedCart)
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedCart))
         return;
       }
 
